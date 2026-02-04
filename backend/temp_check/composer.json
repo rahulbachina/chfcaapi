@@ -1,0 +1,89 @@
+{
+    "name": "cyborgfinance/fcaregisterlaravel",
+    "description": "Financial Conduct Authority (FCA) API Client Library for Laravel.",
+    "keywords": [
+        "CyborgFinance",
+        "Cyborg Finance",
+        "fcaregisterlaravel",
+        "FCA",
+        "FCA REGISTER",
+        "LARAVEL PACKAGE",
+        "LARAVEL"
+    ],
+    "homepage": "https://github.com/cyborgfinance/fcaregisterlaravel",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Cyborg Finance",
+            "email": "webdev@cyborg.finance",
+            "role": "Lead Sponsor"
+        },
+        {
+            "name": "Adam Hosker",
+            "email": "adam@hosker.info",
+            "role": "Web Developer"
+        }
+    ],
+    "require": {
+        "spatie/laravel-package-tools": "^1.16"
+    },
+    "require-dev": {
+        "larastan/larastan": "^2.11",
+        "laravel/boost": "^1.2",
+        "laravel/pint": "^1.25",
+        "orchestra/testbench": "^8.0",
+        "pestphp/pest": "^2.34",
+        "pestphp/pest-plugin-laravel": "^2.3",
+        "pestphp/pest-plugin-type-coverage": "^2.8",
+        "rector/rector": "^1.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cyborgfinance\\Fcaregisterlaravel\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Cyborgfinance\\Fcaregisterlaravel\\Tests\\": "tests"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "lint": [
+            "pint",
+            "rector"
+        ],
+        "test": "./vendor/bin/pest",
+        "test-coverage": "./vendor/bin/pest --coverage",
+        "test-live": "RUN_LIVE_TESTS=true ./vendor/bin/pest --group=live",
+        "test-quick": "./vendor/bin/pest --exclude-group=live,integration",
+        "test:type-coverage": "./vendor/bin/pest --type-coverage --min=100",
+        "test:full": [
+            "echo '--- starting test type coverage ---'",
+            "@test:type-coverage",
+            "echo '--- starting test lint ---'",
+            "pint --test",
+            "echo '--- starting test rector ---'",
+            "rector --dry-run",
+            "echo '--- starting test types ---'",
+            "phpstan"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Cyborgfinance\\Fcaregisterlaravel\\FcaregisterlaravelServiceProvider"
+            ],
+            "aliases": {
+                "Fcaregisterlaravel": "Cyborgfinance\\Fcaregisterlaravel\\FcaregisterlaravelFacade"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

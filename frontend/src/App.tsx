@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Search, Shield, User, Info, Loader2, HelpCircle, Hash, Building2, Users, ExternalLink, Calendar, MapPin, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from './assets/logo.png';
+import DNBTab from './components/dnb/DNBTab';
+import LexisNexisTab from './components/lexisnexis/LexisNexisTab';
 
 interface SearchResult {
   'URL'?: string;
@@ -43,7 +45,7 @@ export default function App() {
   const [selectedFirm, setSelectedFirm] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [searchSource, setSearchSource] = useState<'fca' | 'ch'>('fca');
+  const [searchSource, setSearchSource] = useState<'fca' | 'ch' | 'dnb' | 'lexis'>('fca');
   const [activeTab, setActiveTab] = useState('overview');
 
   const retrievableInfo = [
@@ -270,7 +272,7 @@ export default function App() {
             className="glass"
             style={{ padding: '40px', marginBottom: '40px' }}
           >
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button
                 onClick={() => setSearchSource('fca')}
                 className={searchSource === 'fca' ? 'btn-primary' : 'glass'}
@@ -301,110 +303,147 @@ export default function App() {
               >
                 Companies House
               </button>
-            </div>
-            <form onSubmit={handleSearch} style={{ display: 'flex', gap: '16px' }}>
-              <div style={{ flex: 1, position: 'relative' }}>
-                <Search style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input
-                  type="text"
-                  className="input-glass"
-                  placeholder={searchSource === 'fca' ? "Search by Firm Name, FRN, or IRN..." : "Search by Company Name or Number..."}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  style={{ paddingLeft: '56px' }}
-                />
-              </div>
-              <button type="submit" className="btn-primary" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin" /> : <Shield size={20} />}
-                {loading ? 'Searching...' : `Search ${searchSource === 'fca' ? 'Register' : 'Companies'}`}
+              <button
+                onClick={() => setSearchSource('dnb')}
+                className={searchSource === 'dnb' ? 'btn-primary' : 'glass'}
+                style={{
+                  padding: '8px 24px',
+                  fontSize: '14px',
+                  borderRadius: '30px',
+                  color: searchSource === 'dnb' ? 'white' : 'var(--text-muted)',
+                  fontWeight: 600,
+                  opacity: searchSource === 'dnb' ? 1 : 0.7,
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Dun & Bradstreet
               </button>
-            </form>
+              <button
+                onClick={() => setSearchSource('lexis')}
+                className={searchSource === 'lexis' ? 'btn-primary' : 'glass'}
+                style={{
+                  padding: '8px 24px',
+                  fontSize: '14px',
+                  borderRadius: '30px',
+                  color: searchSource === 'lexis' ? 'white' : 'var(--text-muted)',
+                  fontWeight: 600,
+                  opacity: searchSource === 'lexis' ? 1 : 0.7,
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                LexisNexis
+              </button>
+            </div>
+            {(searchSource === 'fca' || searchSource === 'ch') && (
+              <>
+                <form onSubmit={handleSearch} style={{ display: 'flex', gap: '16px' }}>
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <Search style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      className="input-glass"
+                      placeholder={searchSource === 'fca' ? "Search by Firm Name, FRN, or IRN..." : "Search by Company Name or Number..."}
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      style={{ paddingLeft: '56px' }}
+                    />
+                  </div>
+                  <button type="submit" className="btn-primary" disabled={loading}>
+                    {loading ? <Loader2 className="animate-spin" /> : <Shield size={20} />}
+                    {loading ? 'Searching...' : `Search ${searchSource === 'fca' ? 'Register' : 'Companies'}`}
+                  </button>
+                </form>
+              </>
+            )}
+
+            {searchSource === 'dnb' && <DNBTab />}
+            {searchSource === 'lexis' && <LexisNexisTab />}
           </motion.section>
 
-          {error && (
+          {(searchSource === 'fca' || searchSource === 'ch') && error && (
             <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', marginBottom: '24px', display: 'flex', gap: '12px', alignItems: 'center' }}>
               <Info size={20} />
               {error}
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
-            <AnimatePresence>
-              {results.map((result, idx) => (
-                <motion.div
-                  key={searchSource === 'fca' ? (result['Reference Number'] || `fca-${idx}`) : (result.company_number || `ch-${idx}`)}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="glass card-anim"
-                  style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                    <div style={{ background: 'rgba(0, 210, 255, 0.1)', padding: '8px', borderRadius: '12px' }}>
-                      {searchSource === 'fca' ? (
-                        result['Type of business or Individual'] === 'Firm' ? <Shield size={24} color="#00d2ff" /> : <User size={24} color="#9d50bb" />
-                      ) : (
-                        <Building2 size={24} color="#00d2ff" />
-                      )}
-                    </div>
-                    <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 500 }}>
-                      #{searchSource === 'fca' ? result['Reference Number'] : result.company_number}
-                    </span>
-                  </div>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '8px' }}>
-                    {searchSource === 'fca' ? result.Name : result.title}
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '14px' }}>
-                      <Hash size={14} color="var(--accent-primary)" />
-                      <span>{searchSource === 'fca' ? result['Reference Number'] : result.company_number}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '14px' }}>
-                      <Building2 size={14} color="var(--accent-secondary)" />
-                      <span>
-                        {searchSource === 'fca'
-                          ? `${result['Type of business or Individual']} • Registered`
-                          : `${result.company_status?.toUpperCase() || 'ACTIVE'} • ${result.company_type?.replace('-', ' ').toUpperCase() || 'LTD'}`
-                        }
+          {(searchSource === 'fca' || searchSource === 'ch') && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
+              <AnimatePresence>
+                {results.map((result, idx) => (
+                  <motion.div
+                    key={searchSource === 'fca' ? (result['Reference Number'] || `fca-${idx}`) : (result.company_number || `ch-${idx}`)}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="glass card-anim"
+                    style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                      <div style={{ background: 'rgba(0, 210, 255, 0.1)', padding: '8px', borderRadius: '12px' }}>
+                        {searchSource === 'fca' ? (
+                          result['Type of business or Individual'] === 'Firm' ? <Shield size={24} color="#00d2ff" /> : <User size={24} color="#9d50bb" />
+                        ) : (
+                          <Building2 size={24} color="#00d2ff" />
+                        )}
+                      </div>
+                      <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 500 }}>
+                        #{searchSource === 'fca' ? result['Reference Number'] : result.company_number}
                       </span>
                     </div>
-                    {searchSource === 'ch' && result.address_snippet && (
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                        {result.address_snippet}
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '8px' }}>
+                      {searchSource === 'fca' ? result.Name : result.title}
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '14px' }}>
+                        <Hash size={14} color="var(--accent-primary)" />
+                        <span>{searchSource === 'fca' ? result['Reference Number'] : result.company_number}</span>
                       </div>
-                    )}
-                  </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '14px' }}>
+                        <Building2 size={14} color="var(--accent-secondary)" />
+                        <span>
+                          {searchSource === 'fca'
+                            ? `${result['Type of business or Individual']} • Registered`
+                            : `${result.company_status?.toUpperCase() || 'ACTIVE'} • ${result.company_type?.replace('-', ' ').toUpperCase() || 'LTD'}`
+                          }
+                        </span>
+                      </div>
+                      {searchSource === 'ch' && result.address_snippet && (
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                          {result.address_snippet}
+                        </div>
+                      )}
+                    </div>
 
-                  <button
-                    onClick={() => {
-                      if (searchSource === 'fca') {
-                        const frn = result['Reference Number'];
-                        console.log('FCA Result:', result);
-                        console.log('Extracted FRN:', frn);
-                        if (frn) {
-                          fetchFirmDetails(frn);
+                    <button
+                      onClick={() => {
+                        if (searchSource === 'fca') {
+                          const frn = result['Reference Number'];
+                          if (frn) {
+                            fetchFirmDetails(frn);
+                          } else {
+                            setError('Could not extract FRN from result');
+                          }
                         } else {
-                          setError('Could not extract FRN from result');
+                          const companyNumber = result.company_number;
+                          if (companyNumber) {
+                            fetchCompanyDetails(companyNumber);
+                          }
                         }
-                      } else {
-                        const companyNumber = result.company_number;
-                        if (companyNumber) {
-                          fetchCompanyDetails(companyNumber);
-                        }
-                      }
-                    }}
-                    className="btn-primary"
-                    style={{ padding: '10px 16px', fontSize: '14px', width: '100%' }}
-                  >
-                    View Details
-                  </button>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+                      }}
+                      className="btn-primary"
+                      style={{ padding: '10px 16px', fontSize: '14px', width: '100%' }}
+                    >
+                      View Details
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
 
-          {!(loading || results.length > 0 || query) && (
+          {(searchSource === 'fca' || searchSource === 'ch') && !(loading || results.length > 0 || query) && (
             <div style={{ textAlign: 'center', padding: '100px 0', opacity: 0.5 }}>
               <Shield size={64} style={{ marginBottom: '16px' }} />
               <h2 style={{ fontSize: '1.5rem' }}>Ready for Investigation</h2>

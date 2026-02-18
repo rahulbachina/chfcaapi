@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fca_client import FcaClient
 from companies_house_client import CompaniesHouseClient
@@ -123,6 +124,25 @@ async def company_details(company_number: str):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/companies/download/{document_id}")
+async def download_document(document_id: str):
+    try:
+        pdf_content = await ch_client.get_document(document_id)
+        
+        # Create a generator to stream the content
+        def iterfile():
+            yield pdf_content
+
+        return StreamingResponse(
+            iterfile(),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=document_{document_id}.pdf"}
+        )
+    except Exception as e:
+        print(f"Download Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to download document. Please check the document ID and try again.")
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

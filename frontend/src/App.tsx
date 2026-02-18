@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Shield, User, Info, Loader2, HelpCircle, Hash, Building2, Users, ExternalLink, Calendar, MapPin, Activity } from 'lucide-react';
+import { Search, Shield, User, Info, Loader2, HelpCircle, Hash, Building2, Users, ExternalLink, Calendar, MapPin, Activity, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from './assets/logo.png';
 import DNBTab from './components/dnb/DNBTab';
@@ -93,8 +93,8 @@ export default function App() {
 
     try {
       const endpoint = searchSource === 'fca'
-        ? `http://localhost:8000/api/search?q=${encodeURIComponent(query)}`
-        : `http://localhost:8000/api/companies/search?q=${encodeURIComponent(query)}`;
+        ? `http://localhost:8005/api/search?q=${encodeURIComponent(query)}`
+        : `http://localhost:8005/api/companies/search?q=${encodeURIComponent(query)}`;
 
       const response = await fetch(endpoint);
       const data = await response.json();
@@ -129,16 +129,16 @@ export default function App() {
     setActiveTab('overview');
     try {
       const [details, individuals, permissions, address, requirements, regulators, passports, disciplinary, waivers, names] = await Promise.all([
-        fetch(`http://localhost:8000/api/firm/${frn}`).then(r => r.ok ? r.json() : null),
-        fetch(`http://localhost:8000/api/firm/${frn}/individuals`).then(r => r.ok ? r.json() : null),
-        fetch(`http://localhost:8000/api/firm/${frn}/permissions`).then(r => r.ok ? r.json() : null),
-        fetch(`http://localhost:8000/api/firm/${frn}/address`).then(r => r.ok ? r.json() : null),
-        fetch(`http://localhost:8000/api/firm/${frn}/requirements`).then(r => r.ok ? r.json() : null),
-        fetch(`http://localhost:8000/api/firm/${frn}/regulators`).then(r => r.ok ? r.json() : null),
-        fetch(`http://localhost:8000/api/firm/${frn}/passports`).then(r => r.ok ? r.json() : null),
-        fetch(`http://localhost:8000/api/firm/${frn}/disciplinary`).then(r => r.ok ? r.json() : null),
-        fetch(`http://localhost:8000/api/firm/${frn}/waivers`).then(r => r.ok ? r.json() : null),
-        fetch(`http://localhost:8000/api/firm/${frn}/names`).then(r => r.ok ? r.json() : null)
+        fetch(`http://localhost:8005/api/firm/${frn}`).then(r => r.ok ? r.json() : null),
+        fetch(`http://localhost:8005/api/firm/${frn}/individuals`).then(r => r.ok ? r.json() : null),
+        fetch(`http://localhost:8005/api/firm/${frn}/permissions`).then(r => r.ok ? r.json() : null),
+        fetch(`http://localhost:8005/api/firm/${frn}/address`).then(r => r.ok ? r.json() : null),
+        fetch(`http://localhost:8005/api/firm/${frn}/requirements`).then(r => r.ok ? r.json() : null),
+        fetch(`http://localhost:8005/api/firm/${frn}/regulators`).then(r => r.ok ? r.json() : null),
+        fetch(`http://localhost:8005/api/firm/${frn}/passports`).then(r => r.ok ? r.json() : null),
+        fetch(`http://localhost:8005/api/firm/${frn}/disciplinary`).then(r => r.ok ? r.json() : null),
+        fetch(`http://localhost:8005/api/firm/${frn}/waivers`).then(r => r.ok ? r.json() : null),
+        fetch(`http://localhost:8005/api/firm/${frn}/names`).then(r => r.ok ? r.json() : null)
       ]);
 
       // Normalize permissions: FCA API returns an object where keys are permission names, 
@@ -178,7 +178,7 @@ export default function App() {
     setIsModalOpen(true);
     setActiveTab('overview');
     try {
-      const response = await fetch(`http://localhost:8000/api/companies/${companyNumber}`);
+      const response = await fetch(`http://localhost:8005/api/companies/${companyNumber}`);
       const data = await response.json();
 
       setSelectedFirm({
@@ -728,6 +728,7 @@ export default function App() {
                                 <th style={{ textAlign: 'left', padding: '12px 16px', color: 'var(--text-muted)' }}>Date</th>
                                 <th style={{ textAlign: 'left', padding: '12px 16px', color: 'var(--text-muted)' }}>Type</th>
                                 <th style={{ textAlign: 'left', padding: '12px 16px', color: 'var(--text-muted)' }}>Description</th>
+                                <th style={{ textAlign: 'right', padding: '12px 16px', color: 'var(--text-muted)' }}>Action</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -736,9 +737,63 @@ export default function App() {
                                   <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>{new Date(item.date).toLocaleDateString()}</td>
                                   <td style={{ padding: '12px 16px' }}><span style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>{item.type}</span></td>
                                   <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>{item.description_blob || item.description?.replace(/_/g, ' ')}</td>
+                                  <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                                    {item.links?.document_metadata ? (
+                                      <button
+                                        className="btn-glass"
+                                        style={{ padding: '6px 12px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                        onClick={async (e) => {
+                                          e.stopPropagation();
+                                          // Extract document ID from the metadata URL
+                                          // URL format: https://document-api.company-information.service.gov.uk/document/{document_id}
+                                          const metadataUrl = item.links.document_metadata;
+                                          const documentId = metadataUrl.split('/').pop();
+
+                                          if (!documentId) {
+                                            alert('Document ID not found');
+                                            return;
+                                          }
+
+                                          try {
+                                            const btn = e.currentTarget;
+                                            const originalText = btn.innerHTML;
+                                            btn.innerHTML = '<span class="animate-spin">⌛</span>';
+                                            btn.disabled = true;
+
+                                            const response = await fetch(`http://localhost:8005/api/companies/download/${documentId}`);
+
+                                            if (!response.ok) throw new Error('Download failed');
+
+                                            const blob = await response.blob();
+                                            const url = window.URL.createObjectURL(blob);
+                                            const a = document.createElement('a');
+                                            a.href = url;
+                                            a.download = `document_${documentId}.pdf`;
+                                            document.body.appendChild(a);
+                                            a.click();
+                                            window.URL.revokeObjectURL(url);
+                                            document.body.removeChild(a);
+
+                                            btn.innerHTML = originalText;
+                                            btn.disabled = false;
+                                          } catch (err) {
+                                            console.error(err);
+                                            alert('Failed to download document');
+                                            const btn = e.currentTarget;
+                                            btn.innerHTML = 'Retry';
+                                            btn.disabled = false;
+                                          }
+                                        }}
+                                      >
+                                        <Download size={14} /> Download
+                                      </button>
+                                    ) : (
+                                      <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>N/A</span>
+                                    )}
+                                  </td>
                                 </tr>
                               )) : (
-                                <tr><td colSpan={3} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>No filing history available</td></tr>
+                                <tr><td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>No filing history available</td></tr>
                               )}
                             </tbody>
                           </table>
@@ -920,8 +975,9 @@ export default function App() {
               ) : null}
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
-    </div>
+        )
+        }
+      </AnimatePresence >
+    </div >
   );
 }

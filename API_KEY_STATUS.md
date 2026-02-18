@@ -34,3 +34,16 @@ Once the API key is activated by FCA support, the tool will immediately start wo
 
 ## Temporary Solution
 The UI currently has a mock data fallback so you can test the interface while waiting for API activation.
+
+# D&B and LexisNexis Status
+
+## Dun & Bradstreet (D&B)
+- **Status**: Integrated via local wrapper service (`http://localhost:8001`).
+- **Authentication**: Managed by the wrapper service.
+- **Current State**: Using sandbox/mock data for development.
+
+## LexisNexis
+- **Status**: Integrated via local wrapper service (`http://localhost:8002`).
+- **Authentication**: Managed by the wrapper service.
+- **Current State**: Using sandbox/mock data for development.
+

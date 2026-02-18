@@ -1,35 +1,43 @@
 # KYC Vantage API Wrappers
 
-A modern Python + React application providing unified API wrappers for UK regulatory and company data sources.
+A modern Python + React application providing unified API wrappers for UK regulatory, company, and compliance data sources.
 
 ## Overview
 
-This project provides FastAPI-based wrapper APIs for two essential UK data sources:
+This project provides FastAPI-based wrapper APIs for four essential data sources:
 
 1. **FCA (Financial Conduct Authority) Register API** - Query FCA-regulated firms and individuals
 2. **Companies House API** - Search and retrieve UK company information
+3. **Dun & Bradstreet (D&B)** - Company credit and financial data
+4. **LexisNexis** - AML/KYC screening for persons and entities
 
 ## Project Structure
 
 ```
 kyc-vantage-apis/
-├── backend/                      # FastAPI server
+├── backend/                      # FCA & Companies House API server (Port 8000)
 │   ├── main.py                  # API endpoints
 │   ├── fca_client.py            # FCA API client
-│   ├── companies_house_client.py # Companies House API client
-│   ├── requirements.txt         # Python dependencies
-│   └── .env                     # API credentials (not in repo)
+│   └── companies_house_client.py
+├── D&B API/                      # Dun & Bradstreet API Wrapper (Port 8001)
+├── LexisNexis API/               # LexisNexis API Wrapper (Port 8002)
 ├── frontend/                     # React UI (Vite)
 │   └── src/
 │       ├── App.tsx              # Main dashboard
-│       └── index.css            # Design system
-└── CH Swagger json/             # Companies House API specification
-    └── swagger.json
+│       ├── components/          # React components
+│       ├── api/                 # Frontend API clients
+│       └── types/               # TypeScript definitions
+├── docs/                         # Detailed API Documentation
+│   ├── fca.md
+│   ├── companieshouse.md
+│   ├── dnb.md
+│   └── lexisnexis.md
+└── test-harness-ui/              # Legacy testing UI
 ```
 
 ## Setup & Running
 
-### Backend
+### 1. Main Backend (FCA & Companies House)
 ```bash
 cd backend
 pip install -r requirements.txt
@@ -37,7 +45,23 @@ python main.py
 ```
 Server runs on: `http://localhost:8000`
 
-### Frontend
+### 2. D&B API Service
+```bash
+cd "D&B API"
+# Install dependencies if required (check individual folder)
+# Run the service (command depends on implementation, typically python or node)
+```
+Server runs on: `http://localhost:8001`
+
+### 3. LexisNexis API Service
+```bash
+cd "LexisNexis API"
+# Install dependencies if required
+# Run the service
+```
+Server runs on: `http://localhost:8002`
+
+### 4. Frontend
 ```bash
 cd frontend
 npm install
@@ -47,87 +71,31 @@ UI runs on: `http://localhost:5173`
 
 ## API Configuration
 
-### FCA Register API Credentials
+### FCA & Companies House
+See `backend/.env` configuration in the backend folder.
 
-The FCA Register API requires:
-1. **Registration**: Sign up at https://register.fca.org.uk/Developer/s/
-2. **API Key Activation**: Contact RegisterAPISupport@fca.org.uk to activate your API key
-3. **Environment Variables**: Add to `backend/.env`:
-   ```
-   FCA_EMAIL="your@email.com"
-   FCA_KEY="your_api_key"
-   ```
+### D&B and LexisNexis
+These services are currently configured to run locally on specific ports. Refer to their respective directories for detailed configuration.
 
-#### Current FCA Status
-⚠️ The API key provided returns `404 Not Found` for all endpoints. This typically means:
-- The API key needs activation by FCA support
-- The account is pending approval
-- The API endpoints may have changed
+## Documentation
 
-**Next Steps**: Contact RegisterAPISupport@fca.org.uk with your API credentials to request activation.
+Detailed documentation for each API endpoint is available in the `docs/` directory:
 
-### Companies House API Credentials
-
-The Companies House API requires:
-1. **Registration**: Create an account at https://developer.company-information.service.gov.uk/
-2. **API Key**: Generate an API key from your developer account
-3. **Environment Variables**: Add to `backend/.env`:
-   ```
-   COMPANIES_HOUSE_API_KEY="your_api_key"
-   ```
-
-**Authentication**: Companies House uses HTTP Basic Authentication with the API key as the username and empty password.
-
-## API Endpoints
-
-### FCA Register Endpoints
-
-**Base URL**: `http://localhost:8000/api`
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/search` | GET | Search for firms and individuals |
-| `/firm/{frn}` | GET | Get firm details by FRN |
-| `/firm/{frn}/individuals` | GET | Get firm's associated individuals |
-| `/firm/{frn}/permissions` | GET | Get firm's regulatory permissions |
-| `/firm/{frn}/address` | GET | Get firm's addresses |
-| `/firm/{frn}/requirements` | GET | Get firm's regulatory requirements |
-| `/firm/{frn}/regulators` | GET | Get firm's regulators |
-| `/firm/{frn}/passports` | GET | Get firm's passporting information |
-| `/firm/{frn}/disciplinary` | GET | Get firm's disciplinary history |
-| `/firm/{frn}/waivers` | GET | Get firm's regulatory waivers |
-| `/firm/{frn}/names` | GET | Get firm's trading names |
-
-**Query Parameters for `/search`**:
-- `q` (required): Search query
-- `type` (optional): Type of search ("firm" or "individual", default: "firm")
-- `per_page` (optional): Results per page (default: 10)
-
-### Companies House Endpoints
-
-**Base URL**: `http://localhost:8000/api/companies`
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/search` | GET | Search for UK companies |
-| `/{company_number}` | GET | Get comprehensive company details |
-
-**Query Parameters for `/search`**:
-- `q` (required): Company search query
-- `per_page` (optional): Results per page (default: 10)
-
-**Company Details Response** includes:
-- Company profile (name, status, type, jurisdiction, addresses)
-- Officers (directors, secretaries)
-- Filing history
-- Persons with Significant Control (PSC)
+- [FCA API Docs](docs/fca.md)
+- [Companies House API Docs](docs/companieshouse.md)
+- [Dun & Bradstreet API Docs](docs/dnb.md)
+- [LexisNexis API Docs](docs/lexisnexis.md)
 
 ## Features
 
 - 🎨 Premium "Cyborg" UI with glassmorphism
-- 🔍 Real-time search for firms, individuals, and companies
-- 📊 Comprehensive data retrieval from both FCA and Companies House
-- 🔐 Secure API key management via environment variables
-- ⚡ Fast async API calls with httpx
-- 🎭 Mock data fallback for demonstration (FCA only)
+- 🔍 Unified search across multiple providers
+- 📊 Comprehensive data retrieval:
+    - **FCA**: Permissions, Regulators, Individuals
+    - **Companies House**: Officers, Filing History, PSC
+    - **D&B**: Financials, Analytics, Risk Scores
+    - **LexisNexis**: Screening matches, Risk Levels
+- 🔐 Secure API key management
+- ⚡ Fast async API calls
 - 🌐 CORS-enabled for frontend integration
+
